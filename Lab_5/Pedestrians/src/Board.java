@@ -26,7 +26,12 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 	public void iteration() {
 		for (int x = 1; x < points.length - 1; ++x)
 			for (int y = 1; y < points[x].length - 1; ++y)
+				points[x][y].blocked = false;
+
+		for (int x = 1; x < points.length - 1; ++x)
+			for (int y = 1; y < points[x].length - 1; ++y)
 				points[x][y].move();
+
 		this.repaint();
 	}
 
@@ -39,9 +44,22 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 		this.repaint();
 	}
 
-	private void initializeMooreNeighborhood(int x, int y){
-		for (int i = -1, i <= 1, i++)
-			for (int j = -1; j <= 1;)
+	private void addMooreNeighborhood(int x, int y) {
+		points[x][y].addNeighbor(points[x][y-1]);
+		points[x][y].addNeighbor(points[x+1][y-1]);
+		points[x][y].addNeighbor(points[x+1][y]);
+		points[x][y].addNeighbor(points[x+1][y+1]);
+		points[x][y].addNeighbor(points[x][y+1]);
+		points[x][y].addNeighbor(points[x-1][y+1]);
+		points[x][y].addNeighbor(points[x-1][y]);
+		points[x][y].addNeighbor(points[x-1][y-1]);
+	}
+
+	private void addVonNeumannNeighborhood(int x, int y) {
+		points[x][y].addNeighbor(points[x-1][y]);
+		points[x][y].addNeighbor(points[x+1][y]);
+		points[x][y].addNeighbor(points[x][y-1]);
+		points[x][y].addNeighbor(points[x][y+1]);
 	}
 
 
@@ -54,14 +72,28 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 
 		for (int x = 1; x < points.length-1; ++x) {
 			for (int y = 1; y < points[x].length-1; ++y) {
-				initializeMooreNeighborhood(x, y);
-//				initializeVonNeumannNeighborhood(x, y);
-
+				addMooreNeighborhood(x, y);
+//				addVonNeumannNeighborhood(x, y);
 			}
-		}	
+		}
 	}
-	
-	private void calculateField(){
+
+	private void calculateField() {
+		ArrayList<Point> toCheck = new ArrayList<Point>();
+		for (int x = 0; x < points.length; ++x) {
+			for (int y = 0; y < points[x].length; ++y) {
+				if (points[x][y].type == 2)
+					points[x][y].staticField = 0;
+				toCheck.addAll(points[x][y].neighbors);
+			}
+		}
+
+		while (!toCheck.isEmpty()) {
+			if (toCheck.get(0).calcStaticField()) {
+				toCheck.addAll(toCheck.get(0).neighbors);
+			}
+			toCheck.remove(0);
+		}
 	}
 
 	protected void paintComponent(Graphics g) {
